@@ -20,40 +20,65 @@ impl Lexer {
             line: None,
             pos: 0,
         };
-        l.advance();
+        l.line = match l.lines.next() {
+            Some(line) => Some(line.unwrap()),
+            None => None,
+        };
         return l;
     }
 
     pub fn lex(&mut self) -> Vec<Token> {
         let t = vec![];
         loop {
+            if self.line.is_none() {
+                break;
+            }
             let cc: char;
             if let Some(c) = self.char() {
                 cc = c;
             } else {
-                break;
+                self.advance_line();
+                continue;
             }
-            dbg!(cc);
+
+            match cc {
+                ' ' | '\t' => {
+                    self.advance();
+                    continue;
+                }
+                '#' => {
+                    while self.char().is_some() {
+                        self.advance();
+                    }
+                    continue;
+                }
+                _ => (),
+            }
+
+            // TODO: add token here
+
             self.advance();
         }
         t
     }
 
+    fn advance_line(&mut self) {
+        self.pos = 0;
+        self.line = match self.lines.next() {
+            Some(line) => Some(line.unwrap_or_default()),
+            None => None,
+        }
+    }
+
     fn advance(&mut self) {
         self.pos += 1;
-        if self.pos >= self.line.clone().unwrap_or(String::new()).len() || self.line.is_none() {
-            self.line = match self.lines.next() {
-                Some(line) => Some(line.unwrap()),
-                None => None,
-            }
-        }
     }
 
     fn char(&mut self) -> Option<char> {
         self.line
             .clone()
-            .unwrap_or(String::new())
+            .unwrap_or_default()
             .chars()
-            .nth(self.pos.try_into().unwrap())
+            .nth(self.pos.try_into().unwrap_or_default())
     }
 }
