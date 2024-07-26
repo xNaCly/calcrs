@@ -4,7 +4,7 @@ use std::{
     io::{self, BufReader},
 };
 
-use crate::token::Token;
+use crate::token::{Token, TokenType};
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -28,38 +28,77 @@ impl Lexer {
     }
 
     pub fn lex(&mut self) -> Vec<Token> {
-        let t = vec![];
+        let mut t = vec![];
         loop {
+            // if no more line available, just stop
             if self.line.is_none() {
                 break;
             }
-            let cc: char;
+
+            let mut cc: char;
             if let Some(c) = self.char() {
                 cc = c;
             } else {
+                // we will hit this once we cant advance anymore, means we are at the end of the
+                // curent line
                 self.advance_line();
                 continue;
             }
 
+            let tt: Option<TokenType>;
             match cc {
+                // skip whitespace
                 ' ' | '\t' => {
                     self.advance();
                     continue;
                 }
+                // skip comments
                 '#' => {
                     while self.char().is_some() {
                         self.advance();
                     }
                     continue;
                 }
-                _ => (),
+                '+' => tt = Some(TokenType::PLUS),
+                '-' => tt = Some(TokenType::SUB),
+                '*' => tt = Some(TokenType::MUL),
+                '/' => tt = Some(TokenType::DIV),
+                '0'..='9' => {
+                    let start = self.pos;
+                    while cc.is_digit(10) || cc == '.' || cc == '_' || cc == 'e' {
+                        self.advance();
+                        if let Some(c) = self.char() {
+                            cc = c;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let num = self
+                        .line
+                        .clone()
+                        .unwrap_or_default()
+                        .get(start..self.pos)
+                        .unwrap_or_default()
+                        .chars()
+                        // rust String.parse does not understand _ in numbers, but i like them :)
+                        .filter(|l| *l != '_')
+                        .collect::<String>()
+                        .parse::<f64>()
+                        .expect("Failed to convert input to f64");
+                    t.push(Token::new(start, TokenType::NUMBER(num)));
+                    continue;
+                }
+                _ => panic!("I dont know this character, sorry: {}", cc),
             }
 
-            // TODO: add token here
-
+            match tt {
+                Some(ty) => t.push(Token::new(self.pos, ty)),
+                None => panic!("Something happend that shouldn't have"),
+            }
             self.advance();
         }
-        t
+        dbg!(t)
     }
 
     fn advance_line(&mut self) {
@@ -74,6 +113,7 @@ impl Lexer {
         self.pos += 1;
     }
 
+    /// char returns the current character
     fn char(&mut self) -> Option<char> {
         self.line
             .clone()
