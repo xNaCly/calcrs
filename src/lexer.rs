@@ -11,6 +11,7 @@ pub struct Lexer {
     lines: io::Lines<BufReader<File>>,
     line: Option<String>,
     pos: usize,
+    line_count: usize,
 }
 
 impl Lexer {
@@ -19,6 +20,7 @@ impl Lexer {
             lines,
             line: None,
             pos: 0,
+            line_count: 1,
         };
         l.line = match l.lines.next() {
             Some(line) => Some(line.unwrap()),
@@ -89,7 +91,12 @@ impl Lexer {
                     t.push(Token::new(start, TokenType::NUMBER(num)));
                     continue;
                 }
-                _ => panic!("I dont know this character, sorry: {}", cc),
+                _ => {
+                    panic!(
+                        "Unknown character '{}':{} in line {} and column {}",
+                        cc, cc as u32, self.line_count, self.pos
+                    )
+                }
             }
 
             match tt {
@@ -103,6 +110,7 @@ impl Lexer {
 
     fn advance_line(&mut self) {
         self.pos = 0;
+        self.line_count += 1;
         self.line = match self.lines.next() {
             Some(line) => Some(line.unwrap_or_default()),
             None => None,
