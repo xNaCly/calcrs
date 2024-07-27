@@ -105,7 +105,7 @@ impl Lexer {
             }
             self.advance();
         }
-        dbg!(t)
+        t
     }
 
     fn advance_line(&mut self) {
