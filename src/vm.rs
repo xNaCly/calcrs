@@ -1,7 +1,9 @@
+use std::ops::Div;
+
 use crate::{alloc, types::Type};
 
 pub struct Vm {
-    registers: [Option<Type>; 128],
+    registers: Vec<Option<Type>>,
     constants: Vec<Type>,
     instructions: Vec<Operation>,
 }
@@ -24,7 +26,7 @@ pub enum Operation {
 impl Vm {
     pub fn new(c: &alloc::Pool, instructions: Vec<Operation>) -> Vm {
         Vm {
-            registers: [None; 128],
+            registers: vec![None; 128],
             instructions,
             constants: c.constants.clone(),
         }
@@ -47,8 +49,39 @@ impl Vm {
                     let constant = self
                         .constants
                         .get(argument)
-                        .unwrap_or_else(|| panic!("Wanted constant at index {}", argument));
-                    self.registers[0] = Some(*constant);
+                        .unwrap_or_else(|| panic!("Wanted constant at index {}", argument))
+                        .clone();
+                    self.registers[0] = Some(constant);
+                }
+                Operation::Store => {
+                    let val = self.registers[0].clone();
+                    self.registers[argument] = val;
+                    self.registers[0] = None;
+                }
+                Operation::Add | Operation::Sub | Operation::Div | Operation::Mul => {
+                    let first = self.registers[argument]
+                        .clone()
+                        .unwrap_or_else(|| panic!("Invalid register at index {}", argument));
+                    let second = self.registers[0].clone().expect("r0 holds no value");
+
+                    let r = match operation {
+                        Operation::Add => first.add(second),
+                        Operation::Sub => first.sub(second),
+                        Operation::Mul => first.mul(second),
+                        Operation::Div => first.div(second),
+                        _ => panic!("Not supported"),
+                    };
+
+                    if r.is_some() {
+                        self.registers[0] = r;
+                    } else {
+                        let first = self.registers[argument].clone().unwrap();
+                        let second = self.registers[0].clone().unwrap();
+                        panic!(
+                            "Can't perform Operation::{:#?} on {:?} and {:?}",
+                            operation, first, second
+                        );
+                    }
                 }
                 Operation::Debug => {
                     println!(
@@ -60,7 +93,7 @@ impl Vm {
                             .unwrap_or_else(|| panic!("Invalid register at index {}", argument))
                     )
                 }
-                o => panic!("{:?} not implemented", o),
+                o => panic!("Operation::{:?} not implemented", o),
             }
         }
     }

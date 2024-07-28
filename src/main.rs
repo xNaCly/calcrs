@@ -26,12 +26,18 @@ fn main() {
     let mut l = lexer::Lexer::new(BufReader::new(file).lines());
 
     // TODO: adjust once parser is done
-    let _ = l.lex();
+    let _ = dbg!(l.lex());
     // let mut m = parser::Parser::new(token);
     // let ast = m.parse();
 
-    let ast = expr::Number {
-        t: token::TokenType::Number(12.5),
+    let ast = expr::Binary {
+        t: token::TokenType::Plus,
+        left: &expr::Constant {
+            t: token::TokenType::String("test".to_string()),
+        },
+        right: &expr::Constant {
+            t: token::TokenType::String("test".to_string()),
+        },
     };
 
     let mut allocator = alloc::Allocator::new();
@@ -41,6 +47,6 @@ fn main() {
     code.push(vm::Operation::Debug);
     code.push(vm::Operation::Argument(0));
 
-    let mut vm = vm::Vm::new(&pool, code);
+    let mut vm = vm::Vm::new(&pool, dbg!(code));
     vm.run();
 }
