@@ -22,11 +22,9 @@ impl Lexer {
             pos: 0,
             line_count: 1,
         };
-        l.line = match l.lines.next() {
-            Some(line) => Some(line.unwrap()),
-            None => None,
-        };
-        return l;
+        l.line = l.lines.next().and_then(|l| l.ok());
+
+        l
     }
 
     pub fn lex(&mut self) -> Vec<Token> {
@@ -61,13 +59,13 @@ impl Lexer {
                     }
                     continue;
                 }
-                '+' => tt = Some(TokenType::PLUS),
-                '-' => tt = Some(TokenType::SUB),
-                '*' => tt = Some(TokenType::MUL),
-                '/' => tt = Some(TokenType::DIV),
+                '+' => tt = Some(TokenType::Plus),
+                '-' => tt = Some(TokenType::Sub),
+                '*' => tt = Some(TokenType::Mul),
+                '/' => tt = Some(TokenType::Div),
                 '0'..='9' => {
                     let start = self.pos;
-                    while cc.is_digit(10) || cc == '.' || cc == '_' || cc == 'e' {
+                    while cc.is_ascii_digit() || cc == '.' || cc == '_' || cc == 'e' {
                         self.advance();
                         if let Some(c) = self.char() {
                             cc = c;
@@ -88,7 +86,7 @@ impl Lexer {
                         .collect::<String>()
                         .parse::<f64>()
                         .expect("Failed to convert input to f64");
-                    t.push(Token::new(start, TokenType::NUMBER(num)));
+                    t.push(Token::new(start, TokenType::Number(num)));
                     continue;
                 }
                 _ => {
@@ -111,10 +109,7 @@ impl Lexer {
     fn advance_line(&mut self) {
         self.pos = 0;
         self.line_count += 1;
-        self.line = match self.lines.next() {
-            Some(line) => Some(line.unwrap_or_default()),
-            None => None,
-        }
+        self.line = self.lines.next().and_then(|l| l.ok());
     }
 
     fn advance(&mut self) {
@@ -123,10 +118,6 @@ impl Lexer {
 
     /// char returns the current character
     fn char(&mut self) -> Option<char> {
-        self.line
-            .clone()
-            .unwrap_or_default()
-            .chars()
-            .nth(self.pos.try_into().unwrap_or_default())
+        self.line.as_ref().and_then(|l| l.chars().nth(self.pos))
     }
 }

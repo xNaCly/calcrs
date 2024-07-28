@@ -34,35 +34,34 @@ impl Vm {
         if self.instructions.len() % 2 != 0 {
             panic!("Instruction array is invalid");
         }
-        let mut i = 0;
-        while i < self.instructions.len() {
-            let operation = self.instructions.get(i).expect("Failed to get Operation");
-            let raw_argument = self
-                .instructions
-                .get(i + 1)
-                .expect("Failed to get Operation argument");
-            let argument = match raw_argument {
-                Operation::Argument(v) => *v,
+
+        for instr_pair in self.instructions.chunks_exact(2) {
+            let operation = instr_pair[0];
+            let argument = match instr_pair[1] {
+                Operation::Argument(v) => v,
                 _ => panic!("Wanted an operation of type Argument, got something else"),
             };
+
             match operation {
                 Operation::Load => {
                     let constant = self
                         .constants
                         .get(argument)
-                        .expect(&format!("Wanted constant at index {}", argument));
+                        .unwrap_or_else(|| panic!("Wanted constant at index {}", argument));
                     self.registers[0] = Some(*constant);
                 }
                 Operation::Debug => {
                     println!(
                         "Operation::Debug at r{}: {:?}",
                         argument,
-                        *self.registers.get(argument).unwrap()
+                        *self
+                            .registers
+                            .get(argument)
+                            .unwrap_or_else(|| panic!("Invalid register at index {}", argument))
                     )
                 }
                 o => panic!("{:?} not implemented", o),
             }
-            i += 2;
         }
     }
 }

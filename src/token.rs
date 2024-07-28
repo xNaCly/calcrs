@@ -1,10 +1,10 @@
 #[derive(Debug)]
 pub enum TokenType {
-    PLUS,
-    SUB,
-    DIV,
-    MUL,
-    NUMBER(f64),
+    Plus,
+    Sub,
+    Div,
+    Mul,
+    Number(f64),
 }
 
 #[derive(Debug)]
