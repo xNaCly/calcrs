@@ -59,6 +59,32 @@ impl Lexer {
                     }
                     continue;
                 }
+                '"' => {
+                    self.advance();
+                    let start = self.pos;
+                    let mut valid_str = false;
+                    while let Some(char) = self.char() {
+                        if char == '"' {
+                            valid_str = true;
+                            break;
+                        }
+                        self.advance();
+                    }
+                    if !valid_str {
+                        panic!("String not closed :(");
+                    }
+
+                    // skip closing "
+                    self.advance();
+
+                    t.push(Token::new(
+                        start,
+                        TokenType::String(String::from(
+                            self.line.as_ref().expect("Somehow the line ended before we were done with processing this string").get(start..self.pos-1).unwrap(),
+                        )),
+                    ));
+                    continue;
+                }
                 '+' => tt = Some(TokenType::Plus),
                 '-' => tt = Some(TokenType::Sub),
                 '*' => tt = Some(TokenType::Mul),
@@ -76,8 +102,8 @@ impl Lexer {
 
                     let num = self
                         .line
-                        .clone()
-                        .unwrap_or_default()
+                        .as_ref()
+                        .unwrap_or(&String::new())
                         .get(start..self.pos)
                         .unwrap_or_default()
                         .chars()
