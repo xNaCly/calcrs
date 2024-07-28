@@ -1,13 +1,17 @@
 use crate::types::Type;
 
+const MAX_REGISTERS: usize = 128;
+
 #[derive(Debug)]
 pub struct Allocator {
-    registers: Vec<bool>,
+    registers: [bool; MAX_REGISTERS],
 }
 
 impl Allocator {
     pub fn new() -> Allocator {
-        Allocator { registers: vec![] }
+        Allocator {
+            registers: [false; MAX_REGISTERS],
+        }
     }
 
     /// alloc stubs the incrementation of the registers used
@@ -23,10 +27,13 @@ impl Allocator {
 
     /// alloc stubs the decrementation of the registers no longer used
     pub fn dealloc(&mut self, index: usize) {
-        if self.registers[index + 1] {
-            self.registers[index + 1] = false;
+        if self.registers[index - 1] {
+            self.registers[index - 1] = false;
         } else {
-            panic!("r{} was not allocated, why is it being freezed?", index + 1)
+            panic!(
+                "r{} was not allocated, why is it being deallocated?",
+                index + 1
+            )
         }
     }
 }
