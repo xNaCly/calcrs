@@ -14,8 +14,9 @@ mod vm;
 use expr::Node;
 
 fn main() {
-    let args = env::args().collect::<Vec<_>>();
-    let input = args.get(1).expect("Not enough arguments, wanted filename");
+    let input = env::args()
+        .nth(1)
+        .expect("Not enough arguments, wanted filename");
     let filepath = env::current_dir()
         .expect("Failed to get cwd")
         .as_path()
@@ -30,7 +31,7 @@ fn main() {
     // let ast = m.parse();
 
     let ast = expr::Number {
-        t: token::TokenType::NUMBER(12.5),
+        t: token::TokenType::Number(12.5),
     };
 
     let mut allocator = alloc::Allocator::new();

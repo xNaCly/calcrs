@@ -18,7 +18,7 @@ impl Allocator {
                 return Some(index + 1);
             }
         }
-        return None;
+        None
     }
 
     /// alloc stubs the decrementation of the registers no longer used

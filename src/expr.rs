@@ -15,7 +15,7 @@ pub struct Number {
 
 impl Node for Number {
     fn compile(&self, a: &mut Allocator, c: &mut Pool) -> Vec<Operation> {
-        if let TokenType::NUMBER(number) = self.t {
+        if let TokenType::Number(number) = self.t {
             let pool_index = c.alloc(Type::Number(number));
             vec![Operation::Load, Operation::Argument(pool_index)]
         } else {
