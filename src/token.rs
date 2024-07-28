@@ -5,6 +5,7 @@ pub enum TokenType {
     Div,
     Mul,
     Number(f64),
+    String(String),
 }
 
 #[derive(Debug)]
