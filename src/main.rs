@@ -26,19 +26,9 @@ fn main() {
     let mut l = lexer::Lexer::new(BufReader::new(file).lines());
 
     // TODO: adjust once parser is done
-    let _ = dbg!(l.lex());
-    // let mut m = parser::Parser::new(token);
-    // let ast = m.parse();
-
-    let ast = expr::Binary {
-        t: token::TokenType::Plus,
-        left: &expr::Constant {
-            t: token::TokenType::String("test".to_string()),
-        },
-        right: &expr::Constant {
-            t: token::TokenType::String("test".to_string()),
-        },
-    };
+    let tokens = dbg!(l.lex());
+    let mut m = parser::Parser::new(tokens);
+    let ast = m.parse().expect("Failed to parse");
 
     let mut allocator = alloc::Allocator::new();
     let mut pool = alloc::Pool::new();

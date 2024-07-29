@@ -29,19 +29,26 @@ impl Node for Constant {
     }
 }
 
-pub struct Binary<'a> {
+pub struct Binary {
     pub t: TokenType,
-    pub left: &'a dyn Node,
-    pub right: &'a dyn Node,
+    pub left: Option<Box<dyn Node>>,
+    pub right: Option<Box<dyn Node>>,
 }
 
-impl<'a> Node for Binary<'a> {
+impl Node for Binary {
     fn compile(&self, a: &mut Allocator, c: &mut Pool) -> Vec<Operation> {
-        let mut codes = self.left.compile(a, c);
+        let mut codes = self
+            .left
+            .as_ref()
+            .and_then(|l| Some(l.compile(a, c)))
+            .unwrap_or(vec![]);
         let reg = a.alloc().expect("No more registers available");
         codes.push(Operation::Store);
         codes.push(Operation::Argument(reg));
-        codes.extend(self.right.compile(a, c).into_iter());
+        let right = self.right.as_ref().and_then(|r| Some(r.compile(a, c)));
+        if let Some(ops) = right {
+            codes.extend(ops.into_iter());
+        }
         let code = match self.t {
             TokenType::Plus => Operation::Add,
             TokenType::Sub => Operation::Sub,
