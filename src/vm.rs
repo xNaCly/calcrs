@@ -14,6 +14,8 @@ pub enum Operation {
     Sub,
     Div,
     Mul,
+    // negates r0
+    Neg,
     /// loads argument into r0
     Load,
     /// stores value of r0 in register specified in argument
@@ -82,6 +84,12 @@ impl Vm {
                             operation, first, second
                         );
                     }
+                }
+                Operation::Neg => {
+                    let first = self.registers[argument]
+                        .clone()
+                        .unwrap_or_else(|| panic!("Invalid register at index {}", argument));
+                    self.registers[0] = first.mul(Type::Number(-1.0));
                 }
                 Operation::Debug => {
                     println!(

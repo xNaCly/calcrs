@@ -5,10 +5,13 @@ use crate::{
     vm::Operation,
 };
 
+// TODO: implement the Debug trait for the fucking Node trait, rust is weird
+
 pub trait Node {
     fn compile(&self, a: &mut Allocator, c: &mut Pool) -> Vec<Operation>;
 }
 
+#[derive(Debug)]
 pub struct Constant {
     pub t: TokenType,
 }
@@ -51,14 +54,32 @@ impl Node for Binary {
         }
         let code = match self.t {
             TokenType::Plus => Operation::Add,
-            TokenType::Sub => Operation::Sub,
-            TokenType::Mul => Operation::Mul,
-            TokenType::Div => Operation::Div,
+            TokenType::Minus => Operation::Sub,
+            TokenType::Asteriks => Operation::Mul,
+            TokenType::Slash => Operation::Div,
             _ => panic!("Not supported here"),
         };
         codes.push(code);
         codes.push(Operation::Argument(reg));
         a.dealloc(reg);
         return codes;
+    }
+}
+
+pub struct Unary {
+    pub t: TokenType,
+    pub right: Option<Box<dyn Node>>,
+}
+
+impl Node for Unary {
+    fn compile(&self, a: &mut Allocator, c: &mut Pool) -> Vec<Operation> {
+        let mut codes = self
+            .right
+            .as_ref()
+            .and_then(|l| Some(l.compile(a, c)))
+            .unwrap_or(vec![]);
+        codes.push(Operation::Neg);
+        codes.push(Operation::Argument(0));
+        codes
     }
 }

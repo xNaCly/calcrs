@@ -1,9 +1,11 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     Plus,
-    Sub,
-    Div,
-    Mul,
+    Minus,
+    Slash,
+    Asteriks,
+    BraceLeft,
+    BraceRight,
     Number(f64),
     String(String),
 }

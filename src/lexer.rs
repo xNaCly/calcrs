@@ -52,6 +52,8 @@ impl Lexer {
                     self.advance();
                     continue;
                 }
+                '(' => tt = Some(TokenType::BraceLeft),
+                ')' => tt = Some(TokenType::BraceRight),
                 // skip comments
                 '#' => {
                     while self.char().is_some() {
@@ -86,9 +88,9 @@ impl Lexer {
                     continue;
                 }
                 '+' => tt = Some(TokenType::Plus),
-                '-' => tt = Some(TokenType::Sub),
-                '*' => tt = Some(TokenType::Mul),
-                '/' => tt = Some(TokenType::Div),
+                '-' => tt = Some(TokenType::Minus),
+                '*' => tt = Some(TokenType::Asteriks),
+                '/' => tt = Some(TokenType::Slash),
                 '0'..='9' => {
                     let start = self.pos;
                     while cc.is_ascii_digit() || cc == '.' || cc == '_' || cc == 'e' {

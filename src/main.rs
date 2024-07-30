@@ -28,15 +28,20 @@ fn main() {
     // TODO: adjust once parser is done
     let tokens = dbg!(l.lex());
     let mut m = parser::Parser::new(tokens);
-    let ast = m.parse().expect("Failed to parse");
 
     let mut allocator = alloc::Allocator::new();
     let mut pool = alloc::Pool::new();
-    let mut code = ast.compile(&mut allocator, &mut pool);
+    let mut codes = vec![];
+    let ast = m.parse();
+    dbg!(ast.len());
+    for n in ast {
+        let code = n.unwrap().compile(&mut allocator, &mut pool);
+        codes.extend(code)
+    }
 
-    code.push(vm::Operation::Debug);
-    code.push(vm::Operation::Argument(0));
+    codes.push(vm::Operation::Debug);
+    codes.push(vm::Operation::Argument(0));
 
-    let mut vm = vm::Vm::new(&pool, dbg!(code));
+    let mut vm = vm::Vm::new(&pool, dbg!(codes));
     vm.run();
 }

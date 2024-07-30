@@ -1,28 +1,135 @@
 use crate::{
-    expr::{self, Binary, Node},
-    token::{self, Token},
+    expr::{Binary, Constant, Node, Unary},
+    token::{Token, TokenType},
 };
 
 pub struct Parser {
     pub tokens: Vec<Token>,
+    pos: usize,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { tokens }
+        Parser { tokens, pos: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Box<dyn Node>> {
-        let left = Box::new(expr::Constant {
-            t: token::TokenType::String("test".to_string()),
-        });
-        let right = Box::new(expr::Constant {
-            t: token::TokenType::String("test".to_string()),
-        });
-        Some(Box::new(expr::Binary {
-            t: token::TokenType::Plus,
-            left: Some(left),
-            right: Some(right),
-        }))
+    // let left = Box::new(Constant {
+    //     t: token::TokenType::String("test".to_string()),
+    // });
+    // let right = Box::new(Constant {
+    //     t: token::TokenType::String("test".to_string()),
+    // });
+    // Some(Box::new(Binary {
+    //     t: token::TokenType::Plus,
+    //     left: Some(left),
+    //     right: Some(right),
+    // }))
+
+    pub fn parse(&mut self) -> Vec<Option<Box<dyn Node>>> {
+        let mut list: Vec<Option<Box<dyn Node>>> = vec![];
+        while !self.at_end() {
+            list.push(self.expression());
+        }
+        list
+    }
+
+    fn expression(&mut self) -> Option<Box<dyn Node>> {
+        self.term()
+    }
+
+    fn term(&mut self) -> Option<Box<dyn Node>> {
+        let mut lhs = self.factor();
+        while self.matches(vec![TokenType::Minus, TokenType::Plus]) {
+            let op = self.prev()?.t.clone();
+            let rhs = self.factor();
+            lhs = Some(Box::new(Binary {
+                t: op,
+                left: lhs,
+                right: rhs,
+            }))
+        }
+        lhs
+    }
+
+    fn factor(&mut self) -> Option<Box<dyn Node>> {
+        let mut lhs = self.unary();
+        while self.matches(vec![TokenType::Slash, TokenType::Asteriks]) {
+            let op = self.prev()?.t.clone();
+            let rhs = self.unary();
+            lhs = Some(Box::new(Binary {
+                t: op,
+                left: lhs,
+                right: rhs,
+            }))
+        }
+        lhs
+    }
+
+    fn unary(&mut self) -> Option<Box<dyn Node>> {
+        while self.matches(vec![TokenType::Minus]) {
+            let op = self.prev()?.t.clone();
+            let rhs = self.unary();
+            return Some(Box::new(Unary { t: op, right: rhs }));
+        }
+        self.primary()
+    }
+
+    fn primary(&mut self) -> Option<Box<dyn Node>> {
+        if let TokenType::Number(_) = self.peek()?.t {
+            self.advance();
+            let op = self.prev()?.t.clone();
+            return Some(Box::new(Constant { t: op }));
+        } else if self.matches(vec![TokenType::BraceLeft]) {
+            let n = self.expression();
+            self.consume(TokenType::BraceRight, "Expected ')'");
+            return n;
+        }
+        panic!("Expected expression")
+    }
+
+    fn matches(&mut self, types: Vec<TokenType>) -> bool {
+        for t in types {
+            if self.check(t) {
+                self.advance();
+                return true;
+            }
+        }
+        false
+    }
+
+    fn consume(&mut self, t: TokenType, error: &str) {
+        if self.check(t.clone()) {
+            return self.advance();
+        }
+        let tok = self.peek().unwrap();
+        panic!("Wanted {:#?}, got {:#?}: {}", t, tok.t, error)
+    }
+
+    fn check(&mut self, t: TokenType) -> bool {
+        match self.peek() {
+            Some(token) => token.t == t,
+            None => false,
+        }
+    }
+
+    fn at_end(&mut self) -> bool {
+        self.pos >= self.tokens.len()
+    }
+
+    fn advance(&mut self) {
+        if !self.at_end() {
+            self.pos += 1;
+        }
+    }
+
+    fn peek(&mut self) -> Option<&Token> {
+        self.tokens.get(self.pos)
+    }
+
+    fn prev(&mut self) -> Option<&Token> {
+        if self.pos == 0 {
+            return None;
+        }
+        self.tokens.get(self.pos - 1)
     }
 }
