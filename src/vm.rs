@@ -1,5 +1,3 @@
-use std::ops::Div;
-
 use crate::{alloc, types::Type};
 
 pub struct Vm {
@@ -14,7 +12,7 @@ pub enum Operation {
     Sub,
     Div,
     Mul,
-    // negates r0
+    /// negates r0
     Neg,
     /// loads argument into r0
     Load,

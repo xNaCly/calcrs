@@ -11,7 +11,6 @@ mod parser;
 mod token;
 mod types;
 mod vm;
-use expr::Node;
 
 fn main() {
     let input = env::args()
@@ -25,15 +24,13 @@ fn main() {
     let file = File::open(filepath).expect("Error opening file");
     let mut l = lexer::Lexer::new(BufReader::new(file).lines());
 
-    // TODO: adjust once parser is done
-    let tokens = dbg!(l.lex());
+    let tokens = l.lex();
     let mut m = parser::Parser::new(tokens);
 
     let mut allocator = alloc::Allocator::new();
     let mut pool = alloc::Pool::new();
     let mut codes = vec![];
     let ast = m.parse();
-    dbg!(ast.len());
     for n in ast {
         let code = n.unwrap().compile(&mut allocator, &mut pool);
         codes.extend(code)
@@ -42,6 +39,6 @@ fn main() {
     codes.push(vm::Operation::Debug);
     codes.push(vm::Operation::Argument(0));
 
-    let mut vm = vm::Vm::new(&pool, dbg!(codes));
+    let mut vm = vm::Vm::new(&pool, codes);
     vm.run();
 }

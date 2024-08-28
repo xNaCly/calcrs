@@ -43,14 +43,14 @@ impl Node for Binary {
         let mut codes = self
             .left
             .as_ref()
-            .and_then(|l| Some(l.compile(a, c)))
-            .unwrap_or(vec![]);
+            .map(|l| l.compile(a, c))
+            .unwrap_or_default();
         let reg = a.alloc().expect("No more registers available");
         codes.push(Operation::Store);
         codes.push(Operation::Argument(reg));
-        let right = self.right.as_ref().and_then(|r| Some(r.compile(a, c)));
+        let right = selfr.right.as_ref().map(|r| r.compile(a, c));
         if let Some(ops) = right {
-            codes.extend(ops.into_iter());
+            codes.extend(ops);
         }
         let code = match self.t {
             TokenType::Plus => Operation::Add,
@@ -62,12 +62,11 @@ impl Node for Binary {
         codes.push(code);
         codes.push(Operation::Argument(reg));
         a.dealloc(reg);
-        return codes;
+        codes
     }
 }
 
 pub struct Unary {
-    pub t: TokenType,
     pub right: Option<Box<dyn Node>>,
 }
 
@@ -76,8 +75,8 @@ impl Node for Unary {
         let mut codes = self
             .right
             .as_ref()
-            .and_then(|l| Some(l.compile(a, c)))
-            .unwrap_or(vec![]);
+            .map(|l| l.compile(a, c))
+            .unwrap_or_default();
         codes.push(Operation::Neg);
         codes.push(Operation::Argument(0));
         codes

@@ -80,7 +80,6 @@ impl Lexer {
                     self.advance();
 
                     t.push(Token::new(
-                        start,
                         TokenType::String(String::from(
                             self.line.as_ref().expect("Somehow the line ended before we were done with processing this string").get(start..self.pos-1).unwrap(),
                         )),
@@ -114,7 +113,7 @@ impl Lexer {
                         .collect::<String>()
                         .parse::<f64>()
                         .expect("Failed to convert input to f64");
-                    t.push(Token::new(start, TokenType::Number(num)));
+                    t.push(Token::new(TokenType::Number(num)));
                     continue;
                 }
                 _ => {
@@ -126,7 +125,7 @@ impl Lexer {
             }
 
             match tt {
-                Some(ty) => t.push(Token::new(self.pos, ty)),
+                Some(ty) => t.push(Token::new(ty)),
                 None => panic!("Something happend that shouldn't have"),
             }
             self.advance();

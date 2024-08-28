@@ -13,18 +13,6 @@ impl Parser {
         Parser { tokens, pos: 0 }
     }
 
-    // let left = Box::new(Constant {
-    //     t: token::TokenType::String("test".to_string()),
-    // });
-    // let right = Box::new(Constant {
-    //     t: token::TokenType::String("test".to_string()),
-    // });
-    // Some(Box::new(Binary {
-    //     t: token::TokenType::Plus,
-    //     left: Some(left),
-    //     right: Some(right),
-    // }))
-
     pub fn parse(&mut self) -> Vec<Option<Box<dyn Node>>> {
         let mut list: Vec<Option<Box<dyn Node>>> = vec![];
         while !self.at_end() {
@@ -66,10 +54,9 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Option<Box<dyn Node>> {
-        while self.matches(vec![TokenType::Minus]) {
-            let op = self.prev()?.t.clone();
+        if self.matches(vec![TokenType::Minus]) {
             let rhs = self.unary();
-            return Some(Box::new(Unary { t: op, right: rhs }));
+            return Some(Box::new(Unary { right: rhs }));
         }
         self.primary()
     }
