@@ -1,4 +1,4 @@
-use crate::types::Type;
+use crate::types::Value;
 
 const MAX_REGISTERS: usize = 128;
 
@@ -40,7 +40,7 @@ impl Allocator {
 
 #[derive(Debug)]
 pub struct Pool {
-    pub constants: Vec<Type>,
+    pub constants: Vec<Value>,
 }
 
 impl Pool {
@@ -48,7 +48,7 @@ impl Pool {
         Pool { constants: vec![] }
     }
 
-    pub fn alloc(&mut self, data: Type) -> usize {
+    pub fn alloc(&mut self, data: Value) -> usize {
         self.constants.push(data);
         self.constants.len() - 1
     }

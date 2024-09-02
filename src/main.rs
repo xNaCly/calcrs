@@ -30,7 +30,7 @@ fn main() {
     let mut allocator = alloc::Allocator::new();
     let mut pool = alloc::Pool::new();
     let mut codes = vec![];
-    let ast = m.parse();
+    let ast = dbg!(m.parse());
     for n in ast {
         let code = n.unwrap().compile(&mut allocator, &mut pool);
         codes.extend(code)

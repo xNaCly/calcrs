@@ -1,5 +1,5 @@
 use crate::{
-    expr::{Binary, Constant, Node, Unary},
+    expr::{Binary, Constant, Node, Unary, Variable},
     token::{Token, TokenType},
 };
 
@@ -22,7 +22,28 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Option<Box<dyn Node>> {
-        self.term()
+        if let TokenType::Ident(_) = self.peek()?.t {
+            self.ident()
+        } else {
+            self.term()
+        }
+    }
+
+    fn ident(&mut self) -> Option<Box<dyn Node>> {
+        let identifier = self.peek()?.t.clone();
+        // skip ident
+        self.advance();
+        // declaration of a variable
+        if self.check(TokenType::Equal) {
+            // skip equals
+            self.advance();
+            let rhs = self.primary();
+            return Some(Box::new(Variable {
+                ident: identifier,
+                value: rhs,
+            }));
+        }
+        return Some(Box::new(Constant { t: identifier }));
     }
 
     fn term(&mut self) -> Option<Box<dyn Node>> {
@@ -62,7 +83,11 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Option<Box<dyn Node>> {
-        if let TokenType::Number(_) = self.peek()?.t {
+        if let TokenType::String(_) = self.peek()?.t {
+            self.advance();
+            let op = self.prev()?.t.clone();
+            return Some(Box::new(Constant { t: op }));
+        } else if let TokenType::Number(_) = self.peek()?.t {
             self.advance();
             let op = self.prev()?.t.clone();
             return Some(Box::new(Constant { t: op }));
@@ -71,6 +96,7 @@ impl Parser {
             self.consume(TokenType::BraceRight, "Expected ')'");
             return n;
         }
+        dbg!(self.peek());
         panic!("Expected expression")
     }
 

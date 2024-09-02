@@ -1,37 +1,38 @@
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum Value {
     Number(f64),
     String(String),
+    Ident(String),
 }
 
-impl Type {
-    pub fn add(self, other: Type) -> Option<Type> {
+impl Value {
+    pub fn add(self, other: Value) -> Option<Value> {
         match (self, other) {
-            (Type::Number(left), Type::Number(right)) => Some(Type::Number(left + right)),
-            (Type::String(left), Type::String(right)) => {
-                Some(Type::String(left.to_owned() + right.as_str()))
+            (Value::Number(left), Value::Number(right)) => Some(Value::Number(left + right)),
+            (Value::String(left), Value::String(right)) => {
+                Some(Value::String(left.to_owned() + right.as_str()))
             }
             _ => None,
         }
     }
 
-    pub fn sub(self, other: Type) -> Option<Type> {
+    pub fn sub(self, other: Value) -> Option<Value> {
         match (self, other) {
-            (Type::Number(left), Type::Number(right)) => Some(Type::Number(left - right)),
+            (Value::Number(left), Value::Number(right)) => Some(Value::Number(left - right)),
             _ => None,
         }
     }
 
-    pub fn mul(self, other: Type) -> Option<Type> {
+    pub fn mul(self, other: Value) -> Option<Value> {
         match (self, other) {
-            (Type::Number(left), Type::Number(right)) => Some(Type::Number(left * right)),
+            (Value::Number(left), Value::Number(right)) => Some(Value::Number(left * right)),
             _ => None,
         }
     }
 
-    pub fn div(self, other: Type) -> Option<Type> {
+    pub fn div(self, other: Value) -> Option<Value> {
         match (self, other) {
-            (Type::Number(left), Type::Number(right)) => Some(Type::Number(left / right)),
+            (Value::Number(left), Value::Number(right)) => Some(Value::Number(left / right)),
             _ => None,
         }
     }

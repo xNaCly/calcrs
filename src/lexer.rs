@@ -53,6 +53,7 @@ impl Lexer {
                     continue;
                 }
                 '(' => tt = Some(TokenType::BraceLeft),
+                '=' => tt = Some(TokenType::Equal),
                 ')' => tt = Some(TokenType::BraceRight),
                 // skip comments
                 '#' => {
@@ -117,6 +118,35 @@ impl Lexer {
                     continue;
                 }
                 _ => {
+                    if cc == '_'
+                        || cc == '-'
+                        || (cc >= 'A' && cc <= 'Z')
+                        || (cc >= 'a' && cc <= 'z')
+                    {
+                        let start = self.pos;
+                        while cc.is_ascii_digit()
+                            || cc == '_'
+                            || cc == '-'
+                            || (cc >= 'A' && cc <= 'Z')
+                            || (cc >= 'a' && cc <= 'z')
+                        {
+                            self.advance();
+                            if let Some(c) = self.char() {
+                                cc = c;
+                            } else {
+                                break;
+                            }
+                        }
+                        t.push(Token::new(TokenType::Ident(
+                            self.line
+                                .as_ref()
+                                .unwrap_or(&String::new())
+                                .get(start..self.pos)
+                                .unwrap_or_default()
+                                .to_string(),
+                        )));
+                        continue;
+                    }
                     panic!(
                         "Unknown character '{}':{} in line {} and column {}",
                         cc, cc as u32, self.line_count, self.pos

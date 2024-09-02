@@ -1,9 +1,34 @@
-use crate::{alloc, types::Type};
+use std::collections::HashMap;
 
-pub struct Vm {
-    registers: Vec<Option<Type>>,
-    constants: Vec<Type>,
+use crate::{alloc, types::Value};
+
+// TODO: implement a function table, no closures allowed and all functions are top level, similar
+// to c
+
+// TODO: this needs to be considered for function entry, very important
+struct Stackframe<'a> {
+    pub variables: HashMap<String, Value>,
+    pub parent: Option<&'a Stackframe<'a>>,
+}
+
+impl<'a> Stackframe<'a> {
+    pub fn search(&self, variable: String) -> Option<Value> {
+        let frame = &self;
+        if let Some(val) = frame.variables.get(&variable) {
+            return Some(val.clone());
+        } else if let Some(frame) = self.parent {
+            // look variable up in the scope containing the current scope
+            return frame.search(variable);
+        }
+        None
+    }
+}
+
+pub struct Vm<'a> {
+    registers: Vec<Option<Value>>,
+    constants: Vec<Value>,
     instructions: Vec<Operation>,
+    frame: Stackframe<'a>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -16,19 +41,31 @@ pub enum Operation {
     Neg,
     /// loads argument into r0
     Load,
+
+    /// stores the value in r0 in the frame with the key  specified with its constant pool index argument
+    StoreLocal,
+    /// loads the value of a local variable, works by having the index into the constant pool as an
+    /// argument and loading the resulting value from querying the stackframe with this variable name.
+    LoadLocal,
+
     /// stores value of r0 in register specified in argument
     Store,
+
     /// prints the value stored in the register specified in the argument
     Debug,
     Argument(usize),
 }
 
-impl Vm {
+impl<'a> Vm<'a> {
     pub fn new(c: &alloc::Pool, instructions: Vec<Operation>) -> Vm {
         Vm {
             registers: vec![None; 128],
             instructions,
             constants: c.constants.clone(),
+            frame: Stackframe {
+                variables: HashMap::new(),
+                parent: None,
+            },
         }
     }
 
@@ -45,6 +82,32 @@ impl Vm {
             };
 
             match operation {
+                Operation::LoadLocal => {
+                    let name = self
+                        .constants
+                        .get(argument)
+                        .unwrap_or_else(|| panic!("Wanted constant at index {}", argument));
+                    if let Value::Ident(ident) = name {
+                        self.registers[0] = self.frame.search(ident.to_string());
+                    } else {
+                        panic!("Ident somehow isn't an ident, this should be impossible")
+                    }
+                }
+                Operation::StoreLocal => {
+                    let r0 = self.registers[0]
+                        .clone()
+                        .expect("Failed to get anything from r0");
+                    let name = self
+                        .constants
+                        .get(argument)
+                        .unwrap_or_else(|| panic!("Wanted constant at index {}", argument));
+                    if let Value::Ident(ident) = name {
+                        self.frame.variables.insert(ident.to_string(), r0);
+                        self.registers[0] = None;
+                    } else {
+                        panic!("Ident somehow isn't an ident, this should be impossible")
+                    }
+                }
                 Operation::Load => {
                     let constant = self
                         .constants
@@ -87,7 +150,7 @@ impl Vm {
                     let first = self.registers[argument]
                         .clone()
                         .unwrap_or_else(|| panic!("Invalid register at index {}", argument));
-                    self.registers[0] = first.mul(Type::Number(-1.0));
+                    self.registers[0] = first.mul(Value::Number(-1.0));
                 }
                 Operation::Debug => {
                     println!(

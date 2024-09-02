@@ -6,8 +6,10 @@ pub enum TokenType {
     Asteriks,
     BraceLeft,
     BraceRight,
+    Equal,
     Number(f64),
     String(String),
+    Ident(String),
 }
 
 #[derive(Debug)]
