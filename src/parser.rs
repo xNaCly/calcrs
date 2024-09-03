@@ -35,11 +35,16 @@ impl Parser {
         self.advance();
         // declaration of a variable
         if self.check(TokenType::Equal) {
+            let name = if let TokenType::Ident(ident) = identifier {
+                ident
+            } else {
+                panic!("Impossible state");
+            };
             // skip equals
             self.advance();
             let rhs = self.primary();
             return Some(Box::new(Variable {
-                ident: identifier,
+                ident: name,
                 value: rhs,
             }));
         }

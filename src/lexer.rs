@@ -23,7 +23,6 @@ impl Lexer {
             line_count: 1,
         };
         l.line = l.lines.next().and_then(|l| l.ok());
-
         l
     }
 

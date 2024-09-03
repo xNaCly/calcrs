@@ -20,16 +20,22 @@ impl Node for Constant {
     fn compile(&self, _: &mut Allocator, c: &mut Pool) -> Vec<Operation> {
         match &self.t {
             TokenType::Ident(ident) => {
-                let pool_index = c.alloc(Value::Ident(ident.to_string()));
-                vec![Operation::LoadLocal, Operation::Argument(pool_index)]
+                vec![
+                    Operation::LoadLocal,
+                    Operation::Argument(c.alloc(Value::Ident(ident.to_string()))),
+                ]
             }
             TokenType::Number(number) => {
-                let pool_index = c.alloc(Value::Number(*number));
-                vec![Operation::Load, Operation::Argument(pool_index)]
+                vec![
+                    Operation::Load,
+                    Operation::Argument(c.alloc(Value::Number(*number))),
+                ]
             }
             TokenType::String(string) => {
-                let pool_index = c.alloc(Value::String(string.to_string()));
-                vec![Operation::Load, Operation::Argument(pool_index)]
+                vec![
+                    Operation::Load,
+                    Operation::Argument(c.alloc(Value::String(string.to_string()))),
+                ]
             }
             _ => panic!("Invalid constant '{:?}'", self.t),
         }
@@ -38,14 +44,22 @@ impl Node for Constant {
 
 #[derive(Debug)]
 pub struct Variable {
-    pub ident: TokenType,
+    pub ident: String,
     pub value: Option<Box<dyn Node>>,
 }
 
 impl Node for Variable {
-    fn compile(&self, _a: &mut Allocator, _c: &mut Pool) -> Vec<Operation> {
-        // TODO:
-        todo!("TODO")
+    fn compile(&self, a: &mut Allocator, c: &mut Pool) -> Vec<Operation> {
+        let mut codes = self
+            .value
+            .as_ref()
+            .map(|l| l.compile(a, c))
+            .unwrap_or_default();
+        codes.extend(vec![
+            Operation::StoreLocal,
+            Operation::Argument(c.alloc(Value::Ident(self.ident.clone()))),
+        ]);
+        codes
     }
 }
 
